@@ -63,9 +63,12 @@ async function checkAdmin(){
  const {data:{user}}=await db.auth.getUser();
  if(!user){loginBox.classList.removeconst {data,error}=await db.from("profiles").select("role").eq("id",user.id).single();
  const {data,error}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();
-console.log("ADMIN CHECK:",user.id,data,error);
-  if(error||data?.role!=="admin"){
+console.log("ADMIN CHECK:",user.id,data,error);  
    if(error||data?.role!=="admin"){
+  message.textContent="Admin check failed. Role: "+(data?.role||"NULL")+" Error: "+(error?.message||"No profile data");
+  await db.auth.signOut();
+  return;
+   }
   message.textContent="या अकाउंटला Admin परवानगी नाही.";
   await db.auth.signOut();
   return;
