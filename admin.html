@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daksh Digital Books - Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial,sans-serif;background:#101827;color:white;margin:0;padding:20px}
+main{max-width:650px;margin:auto}
+h1{color:#f5c66b}
+.card{background:#1e293b;padding:18px;border-radius:12px;margin:15px 0}
+input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border-radius:7px;border:0}
+button{background:#e9b95c;font-weight:bold}
+small{color:#cbd5e1}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>DAKSH DIGITAL BOOKS</h1>
+<p>Admin Control Panel</p>
+
+<div class="card" id="loginBox">
+<h2>Admin Login</h2>
+<input id="email" type="email" placeholder="Admin Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<p id="message"></p>
+</div>
+
+<div id="panel" class="hidden">
+<div class="card">
+<h2>Welcome Admin</h2>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div class="card">
+<h2>Upload New Book PDF</h2>
+<input id="titleMr" placeholder="पुस्तकाचे मराठी नाव">
+<input id="titleHi" placeholder="पुस्तकाचे हिंदी नाव">
+<input id="titleEn" placeholder="Book English Title">
+<input id="price" type="number" placeholder="Price (उदा. 99)">
+<input id="pages" type="number" placeholder="Page Count">
+<input id="pdf" type="file" accept="application/pdf">
+<button onclick="uploadBook()">Upload Book</button>
+<p id="uploadMessage"></p>
+</div>
+
+<div class="card">
+<h2>Published Books</h2>
+<div id="bookList">Loading...</div>
+</div>
+</div>
+</main>
+
+<script>
+const SUPABASE_URL="https://dtdgfcelhgkjaprjhonn.supabase.co";
+const SUPABASE_KEY="sb_publishable_MwiWlkP-42r6nH9dkv3xog_JqAAlFRZ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+async function checkAdmin(){
+ const {data:{user}}=await db.auth.getUser();
+ if(!user){loginBox.classList.remove("hidden");panel.classList.add("hidden");return;}
+ const {data,error}=await db.from("profiles").select("role").eq("id",user.id).single();
+ if(error||data?.role!=="admin"){
+  message.textContent="या अकाउंटला Admin परवानगी नाही.";
+  await db.auth.signOut();
+  return;
+ }
+ loginBox.classList.add("hidden");
+ panel.classList.remove("hidden");
+ loadBooks();
+}
+
+async function login(){
+ message.textContent="Checking...";
+ const {error}=await db.auth.signInWithPassword({
+  email:email.value.trim(),
+  password:password.value
+ });
+ if(error){message.textContent=error.message;return;}
+ await checkAdmin();
+}
+
+async function logout(){
+ await db.auth.signOut();
+ location.reload();
+}
+
+async function loadBooks(){
+ const {data,error}=await db.from("books").select("*").order("created_at",{ascending:false});
+ if(error){bookList.textContent=error.message;return;}
+ bookList.innerHTML="";
+ (data||[]).forEach(b=>{
+  const item=document.createElement("p");
+  item.textContent=(b.title_mr||b.title_en||"Untitled")+" — ₹"+b.price;
+  bookList.appendChild(item);
+ });
+}
+
+async function uploadBook(){
+ const msg=document.getElementById("uploadMessage");
+ const file=document.getElementById("pdf").files[0];
+ const title=document.getElementById("titleMr").value.trim();
+ const price=Number(document.getElementById("price").value);
+ if(!title||!file||!price||price<0){msg.textContent="नाव, योग्य किंमत आणि PDF निवडा.";return;}
+ if(file.type!=="application/pdf"){msg.textContent="फक्त PDF फाइल निवडा.";return;}
+ msg.textContent="Uploading...";
+ const {data:{user}}=await db.auth.getUser();
+ if(!user){msg.textContent="Login करा.";return;}
+ const path=user.id+"/"+Date.now()+".pdf";
+ const {error:upError}=await db.storage.from("book-files").upload(path,file);
+ if(upError){msg.textContent=upError.message;return;}
+ const {error}=await db.from("books").insert({
+  title_mr:title,
+  title_hi:titleHi.value.trim()||null,
+  title_en:titleEn.value.trim()||null,
+  author_id:user.id,
+  price:price,
+  currency:"INR",
+  language:"mr",
+  file_type:"pdf",
+  file_url:path,
+  page_count:Number(pages.value)||null,
+  is_published:false,
+  is_free:price===0
+ });
+ if(error){msg.textContent="Book save error: "+error.message;return;}
+ msg.textContent="PDF Upload झाले! पुस्तक सध्या unpublished आहे.";
+ document.getElementById("pdf").value="";
+ loadBooks();
+}
+
+db.auth.onAuthStateChange(()=>{});
+checkAdmin();
+</script>
+</body>
+</html>
