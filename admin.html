@@ -2,18 +2,22 @@
 <html lang="mr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Daksh Digital Books - Admin</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daksh Digital Books | Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{font-family:Arial,sans-serif;background:#101827;color:white;margin:0;padding:20px}
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#101827;color:white;margin:0;padding:18px}
 main{max-width:650px;margin:auto}
 h1{color:#f5c66b}
 .card{background:#1e293b;padding:18px;border-radius:12px;margin:15px 0}
-input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border-radius:7px;border:0}
-button{background:#e9b95c;font-weight:bold}
-small{color:#cbd5e1}
+input,button,select{width:100%;padding:13px;margin:8px 0;border:0;border-radius:7px}
+button{background:#e9b95c;font-weight:bold;cursor:pointer}
+.secondary{background:#475569;color:white}
 .hidden{display:none}
+#message,#uploadMessage{overflow-wrap:anywhere;color:#f5c66b}
+.book{padding:12px;border-bottom:1px solid #475569}
+small{color:#cbd5e1}
 </style>
 </head>
 <body>
@@ -25,126 +29,270 @@ small{color:#cbd5e1}
 <h2>Admin Login</h2>
 <input id="email" type="email" placeholder="Admin Email">
 <input id="password" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
+<button id="loginBtn">Login</button>
 <p id="message"></p>
 </div>
 
 <div id="panel" class="hidden">
+
 <div class="card">
 <h2>Welcome Admin</h2>
-<button onclick="logout()">Logout</button>
+<p id="adminEmail"></p>
+<button class="secondary" id="logoutBtn">Logout</button>
 </div>
 
 <div class="card">
-<h2>Upload New Book PDF</h2>
-<input id="titleMr" placeholder="पुस्तकाचे मराठी नाव">
-<input id="titleHi" placeholder="पुस्तकाचे हिंदी नाव">
-<input id="titleEn" placeholder="Book English Title">
-<input id="price" type="number" placeholder="Price (उदा. 99)">
-<input id="pages" type="number" placeholder="Page Count">
-<input id="pdf" type="file" accept="application/pdf">
-<button onclick="uploadBook()">Upload Book</button>
+<h2>Upload New Book</h2>
+
+<label>पुस्तकाचे मराठी नाव</label>
+<input id="titleMr" placeholder="शेवटचे पत्र">
+
+<label>पुस्तकाचे हिंदी नाव</label>
+<input id="titleHi" placeholder="आखिरी पत्र">
+
+<label>Book English Title</label>
+<input id="titleEn" placeholder="The Last Letter">
+
+<label>पुस्तकाची किंमत (₹)</label>
+<input id="price" type="number" min="0" value="99">
+
+<label>पानांची संख्या</label>
+<input id="pages" type="number" min="1" placeholder="93">
+
+<label>पुस्तकाची भाषा</label>
+<select id="language">
+<option value="mr">मराठी</option>
+<option value="hi">हिंदी</option>
+<option value="en">English</option>
+</select>
+
+<label>PDF फाइल निवडा</label>
+<input id="pdf" type="file" accept=".pdf,application/pdf">
+
+<button id="uploadBtn">Upload Book PDF</button>
 <p id="uploadMessage"></p>
 </div>
 
 <div class="card">
-<h2>Published Books</h2>
+<h2>Books Management</h2>
+<button class="secondary" id="refreshBtn">Refresh Books</button>
 <div id="bookList">Loading...</div>
 </div>
+
 </div>
 </main>
 
 <script>
 const SUPABASE_URL="https://dtdgfcelhgkjaprjhonn.supabase.co";
 const SUPABASE_KEY="sb_publishable_MwiWlkP-42r6nH9dkv3xog_JqAAlFRZ";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const db=window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
+
+const el=id=>document.getElementById(id);
 
 async function checkAdmin(){
- const {data:{user},error:userError}=await db.auth.getUser();
+ el("loginBox").classList.remove("hidden");
+ el("panel").classList.add("hidden");
+ el("message").textContent="Checking account...";
 
- if(userError||!user){
-  loginBox.classList.remove("hidden");
-  panel.classList.add("hidden");
+ const {data:sessionData,error:sessionError}=await db.auth.getUser();
+ const user=sessionData?.user;
+
+ if(sessionError||!user){
+  el("message").textContent="कृपया Admin Login करा.";
   return;
  }
 
- const {data,error}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();
+ const {data,error}=await db
+  .from("profiles")
+  .select("role")
+  .eq("id",user.id)
+  .maybeSingle();
 
- console.log("ADMIN CHECK:",user.id,data,error);
+ console.log("Admin verification:",user.id,data,error);
 
- if(error||!data||data.role!=="admin"){
-  message.textContent="Admin access failed: "+(error?.message||data?.role||"Profile not found");
-  loginBox.classList.remove("hidden");
-  panel.classList.add("hidden");
-  await db.auth.signOut();
+ if(error){
+  el("message").textContent="Profile error: "+error.message;
   return;
  }
 
- loginBox.classList.add("hidden");
- panel.classList.remove("hidden");
- loadBooks();
+ if(!data||data.role!=="admin"){
+  el("message").textContent="या अकाउंटला Admin परवानगी नाही. Role: "+(data?.role||"Not found");
+  return;
+ }
+
+ el("message").textContent="";
+ el("adminEmail").textContent=user.email||"Admin";
+ el("loginBox").classList.add("hidden");
+ el("panel").classList.remove("hidden");
+
+ await loadBooks();
 }
 
 async function login(){
- message.textContent="Checking...";
+ el("message").textContent="Login तपासत आहे...";
+
+ const email=el("email").value.trim();
+ const password=el("password").value;
+
+ if(!email||!password){
+  el("message").textContent="Email आणि Password भरा.";
+  return;
+ }
+
  const {error}=await db.auth.signInWithPassword({
-  email:email.value.trim(),
-  password:password.value
+  email:email,
+  password:password
  });
- if(error){message.textContent=error.message;return;}
+
+ if(error){
+  el("message").textContent=error.message;
+  return;
+ }
+
  await checkAdmin();
 }
 
 async function logout(){
  await db.auth.signOut();
- location.reload();
+ el("panel").classList.add("hidden");
+ el("loginBox").classList.remove("hidden");
+ el("password").value="";
+ el("message").textContent="Logout झाले.";
 }
 
 async function loadBooks(){
- const {data,error}=await db.from("books").select("*").order("created_at",{ascending:false});
- if(error){bookList.textContent=error.message;return;}
- bookList.innerHTML="";
- (data||[]).forEach(b=>{
-  const item=document.createElement("p");
-  item.textContent=(b.title_mr||b.title_en||"Untitled")+" — ₹"+b.price;
-  bookList.appendChild(item);
+ el("bookList").textContent="Loading books...";
+
+ const {data,error}=await db
+  .from("books")
+  .select("*")
+  .order("created_at",{ascending:false});
+
+ if(error){
+  el("bookList").textContent="Books error: "+error.message;
+  return;
+ }
+
+ el("bookList").innerHTML="";
+
+ if(!data||data.length===0){
+  el("bookList").textContent="अजून पुस्तके उपलब्ध नाहीत.";
+  return;
+ }
+
+ data.forEach(book=>{
+  const item=document.createElement("div");
+  item.className="book";
+
+  const name=document.createElement("strong");
+  name.textContent=book.title_mr||book.title_hi||book.title_en||"Untitled";
+
+  const details=document.createElement("p");
+  details.textContent="₹"+book.price+" | "+(book.is_published?"Published":"Unpublished");
+
+  item.appendChild(name);
+  item.appendChild(details);
+  el("bookList").appendChild(item);
  });
 }
 
 async function uploadBook(){
- const msg=document.getElementById("uploadMessage");
- const file=document.getElementById("pdf").files[0];
- const title=document.getElementById("titleMr").value.trim();
- const price=Number(document.getElementById("price").value);
- if(!title||!file||!price||price<0){msg.textContent="नाव, योग्य किंमत आणि PDF निवडा.";return;}
- if(file.type!=="application/pdf"){msg.textContent="फक्त PDF फाइल निवडा.";return;}
- msg.textContent="Uploading...";
- const {data:{user}}=await db.auth.getUser();
- if(!user){msg.textContent="Login करा.";return;}
- const path=user.id+"/"+Date.now()+".pdf";
- const {error:upError}=await db.storage.from("book-files").upload(path,file);
- if(upError){msg.textContent=upError.message;return;}
- const {error}=await db.from("books").insert({
+ const msg=el("uploadMessage");
+ const file=el("pdf").files[0];
+ const title=el("titleMr").value.trim();
+ const priceValue=el("price").value;
+ const price=Number(priceValue);
+ const pages=Number(el("pages").value)||null;
+
+ if(!title||priceValue===""||!Number.isFinite(price)||price<0||!file){
+  msg.textContent="पुस्तकाचे नाव, योग्य किंमत आणि PDF फाइल आवश्यक आहे.";
+  return;
+ }
+
+ if(file.type!=="application/pdf"&&!file.name.toLowerCase().endsWith(".pdf")){
+  msg.textContent="फक्त PDF फाइल निवडा.";
+  return;
+ }
+
+ const {data:sessionData,error:sessionError}=await db.auth.getUser();
+ const user=sessionData?.user;
+
+ if(sessionError||!user){
+  msg.textContent="पुन्हा Login करा.";
+  return;
+ }
+
+ const {data:profile,error:profileError}=await db
+  .from("profiles")
+  .select("role")
+  .eq("id",user.id)
+  .maybeSingle();
+
+ if(profileError||profile?.role!=="admin"){
+  msg.textContent="Admin परवानगी तपासता आली नाही.";
+  return;
+ }
+
+ msg.textContent="PDF Upload सुरू आहे...";
+ el("uploadBtn").disabled=true;
+
+ const path=user.id+"/"+Date.now()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+
+ const {error:uploadError}=await db.storage
+  .from("book-files")
+  .upload(path,file,{contentType:"application/pdf",upsert:false});
+
+ if(uploadError){
+  msg.textContent="PDF Upload Error: "+uploadError.message;
+  el("uploadBtn").disabled=false;
+  return;
+ }
+
+ const {error:insertError}=await db.from("books").insert({
   title_mr:title,
-  title_hi:titleHi.value.trim()||null,
-  title_en:titleEn.value.trim()||null,
+  title_hi:el("titleHi").value.trim()||null,
+  title_en:el("titleEn").value.trim()||null,
   author_id:user.id,
   price:price,
   currency:"INR",
-  language:"mr",
+  language:el("language").value,
   file_type:"pdf",
   file_url:path,
-  page_count:Number(pages.value)||null,
+  page_count:pages,
   is_published:false,
-  is_free:price===0
+  is_free:price===0,
+  sales_count:0,
+  rating_avg:0,
+  rating_count:0
  });
- if(error){msg.textContent="Book save error: "+error.message;return;}
- msg.textContent="PDF Upload झाले! पुस्तक सध्या unpublished आहे.";
- document.getElementById("pdf").value="";
- loadBooks();
+
+ if(insertError){
+  msg.textContent="Book database error: "+insertError.message+" | PDF Storage मध्ये अपलोड झाली आहे.";
+  el("uploadBtn").disabled=false;
+  return;
+ }
+
+ msg.textContent="पुस्तक यशस्वीपणे Upload झाले! सध्या Unpublished आहे.";
+ el("titleMr").value="";
+ el("titleHi").value="";
+ el("titleEn").value="";
+ el("price").value="99";
+ el("pages").value="";
+ el("pdf").value="";
+
+ await loadBooks();
+ el("uploadBtn").disabled=false;
 }
 
-db.auth.onAuthStateChange(()=>{});
+el("loginBtn").addEventListener("click",login);
+el("logoutBtn").addEventListener("click",logout);
+el("uploadBtn").addEventListener("click",uploadBook);
+el("refreshBtn").addEventListener("click",loadBooks);
+
 checkAdmin();
 </script>
 </body>
