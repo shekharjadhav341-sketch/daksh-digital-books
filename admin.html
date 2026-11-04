@@ -60,19 +60,26 @@ const SUPABASE_KEY="sb_publishable_MwiWlkP-42r6nH9dkv3xog_JqAAlFRZ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 async function checkAdmin(){
- const {data:{user}}=await db.auth.getUser();
- if(!user){loginBox.classList.removeconst {data,error}=await db.from("profiles").select("role").eq("id",user.id).single();
- const {data,error}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();
-console.log("ADMIN CHECK:",user.id,data,error);  
-   if(error||data?.role!=="admin"){
-  message.textContent="Admin check failed. Role: "+(data?.role||"NULL")+" Error: "+(error?.message||"No profile data");
-  await db.auth.signOut();
+ const {data:{user},error:userError}=await db.auth.getUser();
+
+ if(userError||!user){
+  loginBox.classList.remove("hidden");
+  panel.classList.add("hidden");
   return;
-   }
-  message.textContent="या अकाउंटला Admin परवानगी नाही.";
+ }
+
+ const {data,error}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();
+
+ console.log("ADMIN CHECK:",user.id,data,error);
+
+ if(error||!data||data.role!=="admin"){
+  message.textContent="Admin access failed: "+(error?.message||data?.role||"Profile not found");
+  loginBox.classList.remove("hidden");
+  panel.classList.add("hidden");
   await db.auth.signOut();
   return;
  }
+
  loginBox.classList.add("hidden");
  panel.classList.remove("hidden");
  loadBooks();
