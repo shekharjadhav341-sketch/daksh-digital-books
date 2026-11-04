@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daksh Digital Books</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#100e19;color:#fff}
+header{padding:18px 6%;display:flex;justify-content:space-between;align-items:center;background:#191525;position:sticky;top:0;z-index:5}
+.brand{font-size:20px;font-weight:bold;letter-spacing:1px}
+.brand small{display:block;font-size:10px;color:#c7a66a;margin-top:5px}
+button,select{cursor:pointer;border:0;border-radius:8px;padding:11px 15px;font-weight:bold}
+button{background:#d4ad70;color:#17121c}
+select{background:#292338;color:white}
+.hero{padding:65px 7%;background:linear-gradient(120deg,#21172d,#493047);text-align:center}
+.hero h1{font-size:clamp(32px,7vw,55px);margin:10px 0}
+.hero p{color:#e2d7e8;line-height:1.7}
+.search{display:flex;gap:8px;max-width:550px;margin:25px auto}
+input{padding:13px;border:1px solid #51475e;border-radius:8px;background:#211d2b;color:white;width:100%;font-size:15px}
+main{padding:35px 6%}
+.section-title{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}
+.filters button{background:#292338;color:#eee}
+.filters button.active{background:#d4ad70;color:#17121c}
+.books{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px}
+.book{background:#211d2b;border:1px solid #393044;border-radius:13px;padding:18px}
+.cover{height:150px;background:linear-gradient(145deg,#513a56,#17121e);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:15px}
+.book h3{margin:8px 0}
+.book p{color:#c7bccc;font-size:13px}
+.price{color:#e4bd7c;font-weight:bold}
+.book button{margin-top:10px}
+.info{padding:40px 8%;background:#191525;text-align:center;line-height:1.8}
+footer{text-align:center;padding:25px;color:#aaa;font-size:13px}
+.modal{display:none;position:fixed;inset:0;background:#000b;z-index:10;align-items:center;justify-content:center;padding:15px}
+.modal-box{background:#211d2b;padding:25px;border-radius:14px;width:100%;max-width:400px}
+.modal-box input{margin:8px 0 14px}
+.modal-actions{display:flex;gap:8px;margin-top:12px}
+.modal-actions button{flex:1}
+.close{float:right;background:transparent;color:white;font-size:22px;padding:0}
+#message{font-size:13px;color:#e4bd7c;line-height:1.5;margin-top:14px}
+#account{font-size:12px;color:#e4bd7c}
+@media(max-width:480px){header{padding:14px 4%}.brand{font-size:16px}.hero{padding:45px 5%}.search{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">DAKSH DIGITAL BOOKS
+    <small>READ • IMAGINE • GROW</small>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <select id="language" onchange="changeLanguage()">
+      <option value="mr">मराठी</option>
+      <option value="hi">हिंदी</option>
+      <option value="en">English</option>
+    </select>
+    <button id="authButton" onclick="openLogin()">Login / Sign up</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div id="account"></div>
+  <h1 id="heroTitle">तुमचं स्वतःचं डिजिटल पुस्तकविश्व</h1>
+  <h2 id="heroSub">शब्दांमधून नवीन विश्वाकडे.</h2>
+  <p id="heroText">मराठी आणि हिंदी कथा, कादंबऱ्या आणि विचार — आता तुमच्या मोबाईलवर.</p>
+  <div class="search">
+    <input id="search" placeholder="पुस्तक किंवा लेखक शोधा..." oninput="renderBooks()">
+    <button onclick="renderBooks()" id="searchButton">शोधा</button>
+  </div>
+</section>
+
+<main>
+  <div class="section-title">
+    <h2 id="libraryTitle">पुस्तकांचे विश्व</h2>
+    <span id="bookCount">4 पुस्तके</span>
+  </div>
+  <div class="filters">
+    <button class="active" onclick="setFilter('all',this)" id="allFilter">सर्व</button>
+    <button onclick="setFilter('mr',this)" id="mrFilter">मराठी</button>
+    <button onclick="setFilter('hi',this)" id="hiFilter">हिंदी</button>
+    <button onclick="setFilter('love',this)" id="loveFilter">प्रेमकथा</button>
+    <button onclick="setFilter('mystery',this)" id="mysteryFilter">रहस्यकथा</button>
+  </div>
+  <div class="books" id="books"></div>
+</main>
+
+<section class="info">
+  <h2 id="infoTitle">तुमचं वाचन, तुमच्या वेळेनुसार</h2>
+  <p id="infoText">पुस्तक खरेदी करा, तुमच्या डिजिटल लायब्ररीत जतन करा आणि वाचन पुढे सुरू ठेवा.</p>
+</section>
+
+<footer>
+  <h3>DAKSH DIGITAL BOOKS</h3>
+  <p>मराठी • हिंदी • साहित्य</p>
+  © 2026 Daksh Digital Books. All rights reserved.<br>
+  A digital publishing initiative by Daksh
+</footer>
+
+<div class="modal" id="loginModal">
+  <div class="modal-box">
+    <button class="close" onclick="closeLogin()">×</button>
+    <h2>DAKSH DIGITAL BOOKS</h2>
+    <p id="loginIntro">Email वापरून मोफत वाचक खाते तयार करा किंवा Login करा.</p>
+    <label>Email</label>
+    <input type="email" id="email" placeholder="तुमचा Email">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="किमान 6 अक्षरे">
+    <div class="modal-actions">
+      <button onclick="signUp()">Sign up</button>
+      <button onclick="signIn()">Login</button>
+    </div>
+    <button onclick="signOut()" id="logoutButton" style="display:none;margin-top:12px;width:100%">Logout</button>
+    <div id="message"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://dtdgfcelhgkjaprjhonn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_MwiWlkP-42r6nH9dkv3xog_JqAAlFRZ";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const books = [
+ {title:"शेवटचे पत्र",author:"शेखर जाधव",lang:"mr",category:"love",price:"₹99",status:"available",cover:"💌"},
+ {title:"दीड मिनिटाची भेट",author:"शेखर जाधव",lang:"mr",category:"love",price:"लवकरच",status:"soon",cover:"❤️"},
+ {title:"अपूर्ण प्रवास",author:"शेखर जाधव",lang:"hi",category:"love",price:"लवकरच",status:"soon",cover:"🚶"},
+ {title:"काळभैरवनाथ",author:"शेखर जाधव",lang:"mr",category:"mystery",price:"लवकरच",status:"soon",cover:"🔱"}
+];
+
+let filter="all";
+let currentLang="mr";
+
+const translations={
+ mr:{
+  hero:"तुमचं स्वतःचं डिजिटल पुस्तकविश्व",sub:"शब्दांमधून नवीन विश्वाकडे.",
+  text:"मराठी आणि हिंदी कथा, कादंबऱ्या आणि विचार — आता तुमच्या मोबाईलवर.",
+  search:"पुस्तक किंवा लेखक शोधा...",searchBtn:"शोधा",library:"पुस्तकांचे विश्व",
+  all:"सर्व",mr:"मराठी",hi:"हिंदी",love:"प्रेमकथा",mystery:"रहस्यकथा",
+  info:"तुमचं वाचन, तुमच्या वेळेनुसार",
+  infoText:"पुस्तक खरेदी करा, तुमच्या डिजिटल लायब्ररीत जतन करा आणि वाचन पुढे सुरू ठेवा.",
+  login:"Login / Sign up",detail:"तपशील",soon:"लवकरच",books:"पुस्तके",
+  intro:"Email वापरून मोफत वाचक खाते तयार करा किंवा Login करा."
+ },
+ hi:{
+  hero:"आपकी अपनी डिजिटल पुस्तक दुनिया",sub:"शब्दों से एक नई दुनिया की ओर।",
+  text:"मराठी और हिंदी कहानियाँ, उपन्यास और विचार — अब आपके मोबाइल पर।",
+  search:"किताब या लेखक खोजें...",searchBtn:"खोजें",library:"पुस्तकों की दुनिया",
+  all:"सभी",mr:"मराठी",hi:"हिंदी",love:"प्रेम कहानी",mystery:"रहस्य कहानी",
+  info:"आपका पढ़ना, आपके समय के अनुसार",
+  infoText:"किताब खरीदें, अपनी डिजिटल लाइब्रेरी में सहेजें और पढ़ना जारी रखें।",
+  login:"Login / Sign up",detail:"विवरण",soon:"जल्द आ रहा है",books:"किताबें",
+  intro:"Email से मुफ्त पाठक खाता बनाएँ या Login करें।"
+ },
+ en:{
+  hero:"Your Own Digital Book World",sub:"From words to a new world.",
+  text:"Marathi and Hindi stories, novels and ideas — now on your mobile.",
+  search:"Search books or authors...",searchBtn:"Search",library:"Explore Library",
+  all:"All",mr:"Marathi",hi:"Hindi",love:"Romance",mystery:"Mystery",
+  info:"Read at your own pace",
+  infoText:"Buy books, save them in your digital library and continue reading.",
+  login:"Login / Sign up",detail:"Details",soon:"Coming soon",books:"Books",
+  intro:"Create a free reader account using Email or Login."
+ }
+};
+
+function changeLanguage(){
+ currentLang=document.getElementById("language").value;
+ const t=translations[currentLang];
+ document.getElementById("heroTitle").textContent=t.hero;
+ document.getElementById("heroSub").textContent=t.sub;
+ document.getElementById("heroText").textContent=t.text;
+ document.getElementById("search").placeholder=t.search;
+ document.getElementById("searchButton").textContent=t.searchBtn;
+ document.getElementById("libraryTitle").textContent=t.library;
+ document.getElementById("allFilter").textContent=t.all;
+ document.getElementById("mrFilter").textContent=t.mr;
+ document.getElementById("hiFilter").textContent=t.hi;
+ document.getElementById("loveFilter").textContent=t.love;
+ document.getElementById("mysteryFilter").textContent=t.mystery;
+ document.getElementById("infoTitle").textContent=t.info;
+ document.getElementById("infoText").textContent=t.infoText;
+ document.getElementById("authButton").textContent=t.login;
+ document.getElementById("loginIntro").textContent=t.intro;
+ renderBooks();
+}
+
+function setFilter(value,button){
+ filter=value;
+ document.querySelectorAll(".filters button").forEach(b=>b.classList.remove("active"));
+ button.classList.add("active");
+ renderBooks();
+}
+
+function renderBooks(){
+ const q=document.getElementById("search").value.toLowerCase();
+ const t=translations[currentLang];
+ const shown=books.filter(b=>{
+  const matchesFilter=filter==="all"||b.lang===filter||b.category===filter;
+  const matchesSearch=(b.title+" "+b.author).toLowerCase().includes(q);
+  return matchesFilter&&matchesSearch;
+ });
+ document.getElementById("bookCount").textContent=shown.length+" "+t.books;
+ document.getElementById("books").innerHTML=shown.map(b=>`
+  <div class="book">
+   <div class="cover">${b.cover}</div>
+   <h3>${b.title}</h3>
+   <p>${b.author} • ${b.lang==="mr"?"मराठी":"हिंदी"}</p>
+   <div class="price">${b.status==="soon"?t.soon:b.price}</div>
+   <button onclick="bookDetails('${b.title}')">${t.detail}</button>
+  </div>`).join("");
+}
+
+function bookDetails(title){
+ if(title==="शेवटचे पत्र"){
+  alert("शेवटचे पत्र — लेखक: शेखर जाधव. किंमत ₹99. खरेदी सुविधा लवकरच सुरू होईल.");
+ }else{
+  alert(title+" — लवकरच उपलब्ध होईल.");
+ }
+}
+
+function openLogin(){
+ document.getElementById("loginModal").style.display="flex";
+ document.getElementById("message").textContent="";
+}
+function closeLogin(){
+ document.getElementById("loginModal").style.display="none";
+}
+function getCredentials(){
+ return {
+  email:document.getElementById("email").value.trim(),
+  password:document.getElementById("password").value
+ };
+}
+async function signUp(){
+ const {email,password}=getCredentials();
+ const msg=document.getElementById("message");
+ if(!email||password.length<6){
+  msg.textContent="योग्य Email आणि किमान 6 अक्षरांचा Password भरा.";
+  return;
+ }
+ msg.textContent="खाते तयार होत आहे...";
+ const {data,error}=await db.auth.signUp({email,password});
+ if(error){msg.textContent=error.message;return;}
+ msg.textContent=data.session
+  ?"खाते तयार झाले! तुम्ही Login झाला आहात."
+  :"खाते तयार झाले. Email confirmation आवश्यक असल्यास Inbox तपासा.";
+}
+async function signIn(){
+ const {email,password}=getCredentials();
+ const msg=document.getElementById("message");
+ if(!email||!password){msg.textContent="Email आणि Password भरा.";return;}
+ msg.textContent="Login होत आहे...";
+ const {error}=await db.auth.signInWithPassword({email,password});
+ if(error){msg.textContent=error.message;return;}
+ msg.textContent="Login यशस्वी!";
+}
+async function signOut(){
+ const {error}=await db.auth.signOut();
+ document.getElementById("message").textContent=error?error.message:"Logout झाले.";
+}
+function updateAccount(session){
+ const button=document.getElementById("authButton");
+ const account=document.getElementById("account");
+ const logout=document.getElementById("logoutButton");
+ if(session?.user){
+  button.textContent="My Account";
+  account.textContent="Welcome, "+session.user.email;
+  logout.style.display="block";
+ }else{
+  button.textContent=translations[currentLang].login;
+  account.textContent="";
+  logout.style.display="none";
+ }
+}
+db.auth.onAuthStateChange((_event,session)=>updateAccount(session));
+db.auth.getSession().then(({data})=>updateAccount(data.session));
+renderBooks();
+</script>
+</body>
+  </html>
+      
