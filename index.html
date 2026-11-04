@@ -123,13 +123,7 @@ const SUPABASE_KEY = "sb_publishable_MwiWlkP-42r6nH9dkv3xog_JqAAlFRZ";
 
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const books = [
- {title:"शेवटचे पत्र",author:"शेखर जाधव",lang:"mr",category:"love",price:"₹99",status:"available",cover:"💌"},
- {title:"दीड मिनिटाची भेट",author:"शेखर जाधव",lang:"mr",category:"love",price:"लवकरच",status:"soon",cover:"❤️"},
- {title:"अपूर्ण प्रवास",author:"शेखर जाधव",lang:"hi",category:"love",price:"लवकरच",status:"soon",cover:"🚶"},
- {title:"काळभैरवनाथ",author:"शेखर जाधव",lang:"mr",category:"mystery",price:"लवकरच",status:"soon",cover:"🔱"}
-];
-
+let books = [];
 let filter="all";
 let currentLang="mr";
 
