@@ -3,37 +3,43 @@
 <html lang="mr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daksh Digital Books | Master Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daksh Digital Books - Master Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#0b0d12;--panel:#151922;--gold:#d6ad55;--text:#f5f5f5;--muted:#9ca3af;--line:#292f3b}
+:root{
+--bg:#0b0d12;--panel:#151922;--gold:#d6ad55;
+--text:#f5f5f5;--muted:#9ca3af;--line:#292f3b;
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-header{background:#11151d;border-bottom:1px solid var(--line);padding:18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+header{background:#11151d;border-bottom:1px solid var(--line);padding:17px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .brand{color:var(--gold);font-size:20px;font-weight:bold}
+main{padding:18px;max-width:1200px;margin:auto}
+h2{color:var(--gold)}
 button{background:var(--gold);color:#111;border:0;padding:11px 15px;border-radius:7px;font-weight:bold;cursor:pointer}
 button.secondary{background:#303746;color:white}
 button.danger{background:#a83232;color:white}
 button:disabled{opacity:.5}
-main{padding:18px;max-width:1200px;margin:auto}
-h2{color:var(--gold)}
 input,select,textarea{width:100%;padding:12px;margin:6px 0 14px;background:#0d1118;color:white;border:1px solid var(--line);border-radius:7px}
+input[type=checkbox]{width:auto}
+input[type=file]{padding:9px}
 label{color:#cbd5e1;font-size:14px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:15px 0}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
 .stat{background:var(--panel);border:1px solid var(--line);padding:18px;border-radius:10px}
 .stat strong{display:block;color:var(--gold);font-size:27px;margin-top:8px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.row>*{flex:1}
-.book{border-bottom:1px solid var(--line);padding:14px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:0}
+.hidden{display:none!important}
+#message{padding:12px;border-radius:7px;margin:10px 0;overflow-wrap:anywhere}
+#loginBox{max-width:430px;margin:50px auto}
+.book{border-bottom:1px solid var(--line);padding:15px 0}
 .book h3{margin:0 0 6px;color:var(--gold)}
 .small{color:var(--muted);font-size:13px}
-.hidden{display:none}
-#message{padding:12px;border-radius:7px;margin:10px 0}
-#loginBox{max-width:430px;margin:50px auto}
 .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 .actions button{font-size:12px;padding:9px}
+.cover{width:85px;height:110px;object-fit:cover;border-radius:6px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -59,7 +65,7 @@ label{color:#cbd5e1;font-size:14px}
 </section>
 
 <section id="adminArea" class="hidden">
-  <h2 id="welcome">Welcome, Admin</h2>
+  <h2 id="welcome">नमस्कार Admin | Welcome Admin</h2>
   <p class="small" id="adminEmail"></p>
 
   <div class="stats">
@@ -69,16 +75,19 @@ label{color:#cbd5e1;font-size:14px}
   </div>
 
   <section class="panel">
-    <h2 id="formHeading">Add / Edit Book</h2>
+    <h2 id="formHeading">पुस्तक जोडा / Add Book</h2>
     <form id="bookForm">
-      <label>मराठी पुस्तकाचे नाव</label>
+
+      <label>मराठी पुस्तकाचे नाव / Marathi Title</label>
       <input id="title_mr" placeholder="शेवटचे पत्र">
-      <label>हिंदी पुस्तकाचे नाव</label>
+
+      <label>हिंदी पुस्तकाचे नाव / Hindi Title</label>
       <input id="title_hi" placeholder="आखिरी पत्र">
+
       <label>English Book Title</label>
       <input id="title_en" placeholder="The Last Letter" required>
 
-      <label>मराठी वर्णन</label>
+      <label>मराठी वर्णन / Marathi Description</label>
       <textarea id="description_mr" rows="3"></textarea>
 
       <div class="row">
@@ -92,7 +101,7 @@ label{color:#cbd5e1;font-size:14px}
         </div>
       </div>
 
-      <label>Book Language</label>
+      <label>Book Language / पुस्तकाची भाषा</label>
       <select id="language">
         <option value="mr">Marathi</option>
         <option value="hi">Hindi</option>
@@ -100,28 +109,35 @@ label{color:#cbd5e1;font-size:14px}
         <option value="both">Multiple Languages</option>
       </select>
 
-      <label>PDF File (नवीन PDF निवडा किंवा रिकामे ठेवा)</label>
-      <input id="pdfFile" type="file" accept="application/pdf">
+      <label>PDF File / पुस्तकाची PDF</label>
+      <input id="pdfFile" type="file" accept=".pdf,application/pdf">
+      <p class="small">नवीन PDF निवडल्यास जुनी PDF जागी नवीन PDF जोडली जाईल.</p>
+
+      <label>Book Cover Image / पुस्तकाचे मुखपृष्ठ (JPG/PNG)</label>
+      <input id="coverFile" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+      <p class="small">JPG किंवा PNG Image निवडा.</p>
 
       <label>
-        <input id="is_free" type="checkbox" style="width:auto">
-        Free Book
+        <input id="is_free" type="checkbox">
+        Free Book / मोफत पुस्तक
       </label>
       <br><br>
+
       <label>
-        <input id="is_published" type="checkbox" style="width:auto">
-        Publish Book
+        <input id="is_published" type="checkbox">
+        Publish Book / पुस्तक प्रकाशित करा
       </label>
       <br><br>
+
       <div class="row">
-        <button type="submit" id="saveBtn">Save Book</button>
+        <button type="submit" id="saveBtn">पुस्तक जतन करा / Save Book</button>
         <button type="button" class="secondary" onclick="resetForm()">Clear Form</button>
       </div>
     </form>
   </section>
 
   <section class="panel">
-    <h2 id="booksHeading">Books Management</h2>
+    <h2 id="booksHeading">पुस्तक व्यवस्थापन / Books Management</h2>
     <input id="searchBook" placeholder="Search books..." oninput="renderBooks()">
     <div id="booksList">Loading books...</div>
   </section>
@@ -129,22 +145,23 @@ label{color:#cbd5e1;font-size:14px}
 </main>
 
 <script>
-const SUPABASE_URL = "https://dtdgfcelhgkjaprjhonn.supabase.co";
-const SUPABASE_KEY = "sb_publishable_MwiWlkP-42r6nH9dkv3xog_JqAAlFRZ";
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL="https://dtdgfcelhgkjaprjhonn.supabase.co";
+const SUPABASE_KEY="sb_publishable_MwiWlkP-42r6nH9dkv3xog_JqAAlFRZ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let currentUser = null;
-let allBooks = [];
-let editingId = null;
-let language = "both";
+let currentUser=null;
+let allBooks=[];
+let editingId=null;
+let language="both";
 
-function msg(text, error=false){
+function msg(text,error=false){
   const el=document.getElementById("message");
   el.textContent=text;
   el.style.background=error?"#592626":"#24442f";
   el.classList.remove("hidden");
   window.scrollTo(0,0);
 }
+
 function toggleLanguage(){
   language=language==="both"?"en":"both";
   document.getElementById("langBtn").textContent=
@@ -152,12 +169,13 @@ function toggleLanguage(){
   document.getElementById("welcome").textContent=
     language==="both"?"नमस्कार Admin | Welcome Admin":"Welcome Admin";
   document.getElementById("formHeading").textContent=
-    language==="both"?"पुस्तक जोडा / Edit Book":"Add / Edit Book";
+    language==="both"?"पुस्तक जोडा / Add Book":"Add / Edit Book";
   document.getElementById("booksHeading").textContent=
     language==="both"?"पुस्तक व्यवस्थापन / Books Management":"Books Management";
   document.getElementById("saveBtn").textContent=
     language==="both"?"पुस्तक जतन करा / Save Book":"Save Book";
 }
+
 async function login(){
   const email=document.getElementById("email").value.trim();
   const password=document.getElementById("password").value;
@@ -166,14 +184,16 @@ async function login(){
   if(error){msg(error.message,true);return}
   await checkAdmin();
 }
+
 async function logout(){
   await db.auth.signOut();
   currentUser=null;
   document.getElementById("adminArea").classList.add("hidden");
   document.getElementById("loginBox").classList.remove("hidden");
   document.getElementById("logoutBtn").classList.add("hidden");
-  msg("Logged out successfully.");
+  msg("Logout successful.");
 }
+
 async function checkAdmin(){
   const {data:{user}}=await db.auth.getUser();
   if(!user){
@@ -181,13 +201,16 @@ async function checkAdmin(){
     document.getElementById("adminArea").classList.add("hidden");
     return;
   }
+
   const {data,error}=await db.from("profiles")
     .select("role").eq("id",user.id).maybeSingle();
+
   if(error||!data||data.role!=="admin"){
     msg("या अकाउंटला Admin परवानगी नाही.",true);
     await db.auth.signOut();
     return;
   }
+
   currentUser=user;
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("adminArea").classList.remove("hidden");
@@ -195,29 +218,56 @@ async function checkAdmin(){
   document.getElementById("adminEmail").textContent=user.email;
   await loadBooks();
 }
+
 async function loadBooks(){
-  const {data,error}=await db.from("books").select("*").order("created_at",{ascending:false});
+  const {data,error}=await db.from("books")
+    .select("*").order("created_at",{ascending:false});
+
   if(error){msg("Books load error: "+error.message,true);return}
+
   allBooks=data||[];
   document.getElementById("totalBooks").textContent=allBooks.length;
-  document.getElementById("publishedBooks").textContent=allBooks.filter(b=>b.is_published).length;
-  document.getElementById("draftBooks").textContent=allBooks.filter(b=>!b.is_published).length;
+  document.getElementById("publishedBooks").textContent=
+    allBooks.filter(b=>b.is_published).length;
+  document.getElementById("draftBooks").textContent=
+    allBooks.filter(b=>!b.is_published).length;
+
   renderBooks();
 }
+
+function escapeHTML(value){
+  return String(value??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
 function renderBooks(){
   const term=(document.getElementById("searchBook").value||"").toLowerCase();
   const filtered=allBooks.filter(b=>
-    [b.title_mr,b.title_hi,b.title_en].some(x=>(x||"").toLowerCase().includes(term))
+    [b.title_mr,b.title_hi,b.title_en]
+      .some(x=>(x||"").toLowerCase().includes(term))
   );
+
   const list=document.getElementById("booksList");
-  if(!filtered.length){list.textContent="No books found.";return}
+
+  if(!filtered.length){
+    list.textContent="No books found.";
+    return;
+  }
+
   list.innerHTML=filtered.map(b=>`
     <div class="book">
       <h3>${escapeHTML(b.title_mr||b.title_en||"Untitled")}</h3>
+      ${b.cover_url?
+        `<img class="cover" src="${escapeHTML(b.cover_url)}" alt="Book Cover">`:""}
+      <div>${escapeHTML(b.title_hi||"")}</div>
       <div>${escapeHTML(b.title_en||"")}</div>
-      <div class="small">₹${b.price} | ${b.page_count||"-"} pages |
-      ${b.is_published?"Published":"Draft"} |
-      ${b.is_free?"Free":"Paid"}</div>
+      <div class="small">
+        ₹${Number(b.price||0)} |
+        ${b.page_count||"-"} pages |
+        ${b.is_published?"Published":"Draft"} |
+        ${b.is_free?"Free":"Paid"}
+      </div>
       <div class="actions">
         <button onclick="editBook('${b.id}')">Edit</button>
         <button class="secondary" onclick="togglePublish('${b.id}',${!b.is_published})">
@@ -225,63 +275,76 @@ function renderBooks(){
         </button>
         <button class="danger" onclick="deleteBook('${b.id}')">Delete</button>
       </div>
-    </div>`).join("");
+    </div>
+  `).join("");
 }
-function escapeHTML(value){
-  return String(value??"").replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-}
+
 function editBook(id){
   const b=allBooks.find(x=>x.id===id);
   if(!b)return;
+
   editingId=id;
-  ["title_mr","title_hi","title_en","description_mr","price","page_count","language"]
-    .forEach(k=>document.getElementById(k).value=b[k]??"");
+
+  ["title_mr","title_hi","title_en","description_mr",
+   "price","page_count","language"].forEach(k=>{
+    document.getElementById(k).value=b[k]??"";
+  });
+
   document.getElementById("is_free").checked=!!b.is_free;
   document.getElementById("is_published").checked=!!b.is_published;
-  document.getElementById("formHeading").textContent="Edit Book: "+(b.title_en||"");
+  document.getElementById("formHeading").textContent=
+    "Edit Book / पुस्तक बदला";
   document.getElementById("saveBtn").textContent="Update Book";
   window.scrollTo(0,0);
 }
+
 function resetForm(){
   document.getElementById("bookForm").reset();
   editingId=null;
-  document.getElementById("formHeading").textContent="Add / Edit Book";
-  document.getElementById("saveBtn").textContent="Save Book";
+  document.getElementById("formHeading").textContent=
+    "पुस्तक जोडा / Add Book";
+  document.getElementById("saveBtn").textContent=
+    "पुस्तक जतन करा / Save Book";
 }
+
 async function togglePublish(id,value){
-  const {error}=await db.from("books").update({is_published:value}).eq("id",id);
+  const {error}=await db.from("books")
+    .update({is_published:value}).eq("id",id);
+
   if(error){msg(error.message,true);return}
+
   msg(value?"Book published.":"Book moved to draft.");
   await loadBooks();
 }
+
 async function deleteBook(id){
   if(!confirm("हे पुस्तक कायमचे Delete करायचे आहे का?"))return;
+
   const {error}=await db.from("books").delete().eq("id",id);
+
   if(error){msg(error.message,true);return}
-  msg("Book record deleted. Storage PDF may need separate cleanup.");
+
+  msg("Book record deleted. Storage files may need separate cleanup.");
+  if(editingId===id)resetForm();
   await loadBooks();
 }
+
 document.getElementById("bookForm").addEventListener("submit",async e=>{
   e.preventDefault();
-  if(!currentUser){msg("Please login again.",true);return}
+
+  if(!currentUser){
+    msg("Please login again.",true);
+    return;
+  }
+
   const btn=document.getElementById("saveBtn");
   btn.disabled=true;
+
   try{
-    let filePath=null;
-    const file=document.getElementById("pdfFile").files[0];
-    if(file){
-      if(file.type!=="application/pdf")throw new Error("फक्त PDF फाइल निवडा.");
-      const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      filePath=currentUser.id+"/"+Date.now()+"-"+safeName;
-      const {error:uploadError}=await db.storage.from("book-files").upload(filePath,file);
-      if(uploadError)throw uploadError;
-    }
     const payload={
-      title_mr:document.getElementById("title_mr").value,
-      title_hi:document.getElementById("title_hi").value,
-      title_en:document.getElementById("title_en").value,
+      title_mr:document.getElementById("title_mr").value.trim(),
+      title_hi:document.getElementById("title_hi").value.trim(),
+      title_en:document.getElementById("title_en").value.trim(),
       description_mr:document.getElementById("description_mr").value,
       price:Number(document.getElementById("price").value||0),
       page_count:Number(document.getElementById("page_count").value||0),
@@ -291,33 +354,84 @@ document.getElementById("bookForm").addEventListener("submit",async e=>{
       currency:"INR",
       file_type:"pdf"
     };
-    if(filePath)payload.file_url=filePath;
+
+    // PDF Upload - Private Bucket
+    const pdfFile=document.getElementById("pdfFile").files[0];
+
+    if(pdfFile){
+      if(pdfFile.type!=="application/pdf"){
+        throw new Error("फक्त PDF फाइल निवडा.");
+      }
+
+      const safePdfName=pdfFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      const pdfPath=currentUser.id+"/"+Date.now()+"-"+safePdfName;
+
+      const {error:pdfError}=await db.storage
+        .from("book-files").upload(pdfPath,pdfFile);
+
+      if(pdfError)throw pdfError;
+
+      payload.file_url=pdfPath;
+    }
+
+    // Cover Image Upload - Public Bucket
+    const coverFile=document.getElementById("coverFile").files[0];
+
+    if(coverFile){
+      if(!["image/jpeg","image/png"].includes(coverFile.type)){
+        throw new Error("फक्त JPG किंवा PNG Cover निवडा.");
+      }
+
+      const safeCoverName=coverFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      const coverPath=currentUser.id+"/"+Date.now()+"-"+safeCoverName;
+
+      const {error:coverError}=await db.storage
+        .from("book-covers").upload(coverPath,coverFile);
+
+      if(coverError)throw coverError;
+
+      const {data:coverData}=db.storage
+        .from("book-covers").getPublicUrl(coverPath);
+
+      payload.cover_url=coverData.publicUrl;
+    }
+
     let result;
+
     if(editingId){
       result=await db.from("books").update(payload).eq("id",editingId);
     }else{
       payload.author_id=currentUser.id;
       result=await db.from("books").insert(payload);
     }
+
     if(result.error)throw result.error;
-    msg(editingId?"Book updated successfully.":"New book added successfully.");
+
+    msg(editingId?
+      "Book updated successfully.":
+      "New book saved successfully."
+    );
+
     resetForm();
     await loadBooks();
+
   }catch(err){
     msg("Error: "+err.message,true);
   }finally{
     btn.disabled=false;
   }
 });
+
 db.auth.onAuthStateChange((event,session)=>{
   if(event==="SIGNED_OUT"){
+    currentUser=null;
     document.getElementById("adminArea").classList.add("hidden");
     document.getElementById("loginBox").classList.remove("hidden");
     document.getElementById("logoutBtn").classList.add("hidden");
   }
 });
+
 checkAdmin();
 </script>
 </body>
-  </html>
-  
+</html>
