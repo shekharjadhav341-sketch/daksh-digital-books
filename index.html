@@ -124,6 +124,20 @@ const SUPABASE_KEY = "sb_publishable_MwiWlkP-42r6nH9dkv3xog_JqAAlFRZ";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let books = [];
+  async function loadBooks(){
+ const {data,error}=await db.from("books").select("*").eq("is_published",true).order("created_at",{ascending:false});
+ if(error){console.error("Books loading error:",error.message);return;}
+ books=(data||[]).map(b=>({
+  title:b.title_mr||b.title_hi||b.title_en||"Untitled",
+  author:"शेखर जाधव",
+  lang:b.language||"mr",
+  category:"all",
+  price:b.is_free?"मोफत":"₹"+b.price,
+  status:"available",
+  cover:"📖"
+ }));
+ renderBooks();
+  }
 let filter="all";
 let currentLang="mr";
 
@@ -177,8 +191,9 @@ function changeLanguage(){
  document.getElementById("infoTitle").textContent=t.info;
  document.getElementById("infoText").textContent=t.infoText;
  document.getElementById("authButton").textContent=t.login;
- document.getElementById("loginIntro").textContent=t.intro;
- renderBooks();
+ document.getElementById("loginIntro").textContent=t.int   
+  renderBooks();
+loadBooks();
 }
 
 function setFilter(value,button){
