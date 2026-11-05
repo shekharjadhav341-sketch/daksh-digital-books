@@ -276,7 +276,19 @@ function bookDetails(id){
 
  const sampleURL="https://shekharjadhav341-sketch.github.io/daksh-digital-books/shevatacha-patra-free-sample.pdf";
 
- window.open(sampleURL,"_blank");
+ const title=getTitle(book);
+
+ const choice=confirm(
+  title+
+  "\nलेखक: शेखर जाधव"+
+  "\n\nमोफत नमुना वाचण्यासाठी OK दाबा."+
+  "\nपूर्ण पुस्तकाची किंमत: ₹49"+
+  "\n\nOK = मोफत नमुना"
+ );
+
+ if(choice){
+  window.open(sampleURL,"_blank");
+ }
 }
 
 function openLogin(){
