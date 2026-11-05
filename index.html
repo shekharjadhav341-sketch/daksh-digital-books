@@ -273,11 +273,10 @@ function renderBooks(){
 function bookDetails(id){
  const book=books.find(b=>b.id===id);
  if(!book)return;
- alert(
-  getTitle(book)+"\nलेखक: "+book.author+
-  "\nकिंमत: "+book.price+
-  "\n\n"+(book.description||"पुस्तकाची अधिक माहिती लवकरच.")
- );
+
+ const sampleURL="https://shekharjadhav341-sketch.github.io/daksh-digital-books/shevatacha-patra-free-sample.pdf";
+
+ window.open(sampleURL,"_blank");
 }
 
 function openLogin(){
